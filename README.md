@@ -10,10 +10,11 @@ FuseBox leverages Account Abstraction out of the Box. It is an Open Source Walle
 
 Before we begin, ensure you have the following:
 
-Node.js is installed on your machine. You can download it from here.
-Code Editor: Use your preferred code editor; VS Code is recommended.
-An EOA wallet with a private key. You can use an existing one or create a new wallet.
-Basic Understanding of JavaScript: Familiarity with JavaScript will be helpful.
+- Node.js is installed on your machine.
+- Code Editor: Use your preferred code editor; VS Code is recommended.
+- An EOA wallet with a private key. You can use an existing one or create a new wallet.
+- A basic understanding of React.js and Next.js.
+- An API key from the Fuse Console. Get one [here](https://console.fuse.io/build).
 
 ### Step 1: Set Up Your Next.js App
 
