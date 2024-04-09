@@ -1,75 +1,188 @@
-# Repository for FuseBox Code Examples
+# Introduction
 
-## FuseBox SDK Examples Repository
+In this tutorial, we'll walk through fetching token balances for a Smart Contract Wallet using the Fusebox Web SDK in a Next.js application. We'll utilize React hooks to manage the State and display the token balances in a table format.
 
-Welcome to the FuseBox SDK Examples Repository! This repository is designed to provide developers with a comprehensive collection of code examples utilizing the FuseBox Web SDK, FuseBox Mobile SDK, and the FuseBox API. Whether you're a seasoned developer looking to integrate FuseBox technologies into your projects or a newcomer eager to explore the capabilities of the FuseBox ecosystem, you've come to the right place. 💻
+## Prerequisites
 
-## What is FuseBox?
+Before starting, ensure you have the following:
 
-[FuseBox](https://docs.fuse.io/fuse-box/getting-started) is an Open Source Wallet-As-A-Service platform based on Account Abstraction. It is ERC-4337 complaint and provides Developers the ability to use a Bundler for collacting UserOperations, and also a Paymaster to sponsor Gas payments for their users to provide a Gasless experience. It provides a set of features that are available to Developers via a SDKs (TypeScript & Dart). Thus making is easier for Developers to interact with the Fuse Blockchain without the need to make direct RPC calls, and eliminating the need to use a node service provider.
+- Node.js installed on your machine.
+- Code Editor: Use your preferred code editor; VS Code is recommended.
+- An EOA wallet with a private key. You can use an existing one or create a new wallet.
+- A basic understanding of React.js and Next.js.
+- An API key from the Fuse Console. Get one [here](https://console.fuse.io/build).
 
-Whether you're building financial services, decentralized marketplaces, or social networking platforms, FuseBox provides the tools and infrastructure you need to bring your ideas to life.
+## Step 1: Set Up a Next.js Project
 
-## FuseBox SDKs
+If you haven't already set up a Next.js project, you can create one using the following commands:
 
-### FuseBox Web SDK
+```bash
+npx create-next-app my-project
+cd my-project
+```
 
-The FuseBox Web SDK enables developers to create web-based decentralized applications that seamlessly interact with the FuseBox network. With robust features and intuitive functionalities, developers can quickly integrate blockchain functionality into their web applications.
+Answer the required prompts from NextJS in the terminal. We must note that we use TypeScript and Tailwind CSS for this application.
 
-Learn more about the FuseBox Web SDK: [FuseBox Web SDK](https://www.npmjs.com/package/@fuseio/fusebox-web-sdk)
+## Step 2: Install Required Packages
 
-### FuseBox Mobile SDK
+Install the necessary packages by running the following command in your project directory:
 
-The FuseBox Mobile SDK allows developers to build powerful decentralized applications for mobile platforms, including iOS and Android. With native support for mobile features and a streamlined development experience, developers can create immersive decentralized experiences for mobile users.
+```bash
+npm install @fuseio/fusebox-web-sdk ethers
+```
 
-Explore the FuseBox Mobile SDK: [FuseBox Mobile SDK](https://pub.dev/packages/fuse_wallet_sdk)
+## Step 3: Implement the Code
 
-### FuseBox API
+Replace the contents of `pages/index.js` with the following code:
 
-The FuseBox API provides developers with access to a wide range of blockchain functionalities, including wallet management, transaction processing, and smart contract interactions. With comprehensive documentation and easy-to-use endpoints, developers can integrate blockchain capabilities into their applications with minimal effort.
+```javascript
+// pages/index.js
+import { Inter } from "next/font/google";
+const inter = Inter({ subsets: ["latin"] });
 
-Discover the FuseBox API: [FuseBox API](https://docs.fuse.io/api-introduction/)
+import { FuseSDK } from "@fuseio/fusebox-web-sdk";
+import { ethers } from "ethers";
+import { useState, useEffect } from 'react'
 
-## Repository Contents
+export default function Home() {
+  const [smartAccount, setSmartAccount] = useState<string>("")
+  const [tokenNames, setTokenNames] = useState([])
+  const [balances, setBalances] = useState({});
 
-This repository contains a variety of code examples showcasing the capabilities of the FuseBox SDKs and API. From simple "Hello, World" demonstrations to more advanced dApp implementations, you'll find a wealth of resources to help you kickstart your FuseBox development journey.
+  const smartWallet = async () => {
+    const apiKey = "YOUR_API_KEY"; // Replace with your API key
+    const credentials = new ethers.Wallet(`YOUR_PRIVATE_KEY`); // Replace with your private key
+    const fuseSDK = await FuseSDK.init(apiKey, credentials, {
+      withPaymaster: true,
+    });
 
-## Getting Started
+    setSmartAccount(fuseSDK.wallet.getSender());
 
-To get started, simply clone this repository and explore the code examples provided. Each example lives in a separate branch, allowing you to focus on specific features or use cases. Follow these steps to clone a particular example branch:
+    const tokenList = await fuseSDK.explorerModule.getTokenList(smartAccount);
+    setTokenNames(tokenList);
 
-1. Clone the repository to your local machine using Git:
+    const tokenAddresses = tokenList.map((x) => x.address);
 
-   ```bash
-   git clone https://github.com/fuseio/examples.git
-   ```
+    const fetchedBalances = {};
 
-2. Navigate to the directory of the cloned repository:
+    for (const tokenAddress of tokenAddresses) {
+      const balance = await fuseSDK.explorerModule.getTokenBalance(tokenAddress, smartAccount);
+      fetchedBalances[tokenAddress] = balance;
+    }
 
-   ```bash
-   cd examples
-   ```
+    setBalances(fetchedBalances);
+  };
 
-3. List all available branches:
+  useEffect(() => {
+    smartWallet();
+  }, []);
 
-   ```bash
-   git branch -a
-   ```
+  return (
+    <main className={`flex flex-col items-center p-24 ${inter.className}`}>
+      <h1>Hello, World!</h1>
+      <p>Smart Account Address: {smartAccount}</p>
+      <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-12">
+        <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+          <thead className="text-xs text-gray-700 uppercase dark:text-gray-400">
+            <tr>
+              <th scope="col" className="px-6 py-3 bg-gray-50 dark:bg-gray-800">Token Name</th>
+              <th scope="col" className="px-6 py-3">Token Address</th>
+              <th scope="col" className="px-6 py-3 bg-gray-50 dark:bg-gray-800">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tokenNames.map((token, index) => (
+              <tr key={index}>
+                <td>{token.name}</td>
+                <td>{Object.keys(balances)[index]}</td>
+                <td>{Object.values(balances)[index].toString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  );
+}
+```
 
-4. Choose the example you want to explore and checkout to its branch:
+Replace `"YOUR_API_KEY"` and `"YOUR_PRIVATE_KEY"` with your actual API key and private key.
 
-   ```bash
-   git checkout example-branch-name
-   ```
+## Step 4: Run Your Next.js Application
 
-5. Explore the example code and follow the provided documentation and instructions to understand how to leverage FuseBox technologies in your own projects.
+Run your Next.js application using the following command:
 
-We're excited to see what you'll create with FuseBox! If you have any questions, feedback, or feature requests, don't hesitate to reach out to us on [Twitter](https://twitter.com/Fuse_network), [Discord](https://discord.com/invite/jpPMeSZ) and [Telegram](https://t.me/fuseio).
+```bash
+npm run dev
+```
 
-Happy coding!
+Visit `http://localhost:3000` in your browser to see the application in action. You should see a table displaying the token names, addresses, and amounts associated with the Smart Contract Wallet.
 
-The FuseBox Team
+That's it! Using the Fusebox Web SDK, you've successfully fetched and displayed token balances for a Smart Contract Wallet in a Next.js application. You can further customize the UI or add additional features per your requirements.
 
-## Example Projects
+## Step 5: Code breakdown
 
-- [FuseBox Web SDK Demo App](https://github.com/fuseio/examples/tree/web-sdk-demo)
+Let's break down the `smartWallet` function and explain the usage of the `getTokenList` and `getTokenBalance` methods:
+
+```javascript
+const smartWallet = async () => {
+  // Initialize FuseSDK with API key and credentials
+  const apiKey = "YOUR_API_KEY"; // Replace with your API key
+  const credentials = new ethers.Wallet(`YOUR_PRIVATE_KEY`); // Replace with your private key
+  const fuseSDK = await FuseSDK.init(apiKey, credentials, {
+    withPaymaster: true,
+  });
+
+  // Get the Smart Account Address
+  setSmartAccount(fuseSDK.wallet.getSender());
+
+  // Get the list of tokens held by the Smart Contract Wallet
+  const tokenList = await fuseSDK.explorerModule.getTokenList(smartAccount);
+  setTokenNames(tokenList);
+
+  // Extract token addresses from the token list
+  const tokenAddresses = tokenList.map((x) => x.address);
+
+  // Fetch balances for each token
+  const fetchedBalances = {};
+
+  for (const tokenAddress of tokenAddresses) {
+    // Get the balance for the current token
+    const balance = await fuseSDK.explorerModule.getTokenBalance(tokenAddress, smartAccount);
+    // Store the balance in the fetchedBalances object with tokenAddress as key
+    fetchedBalances[tokenAddress] = balance;
+  }
+
+  // Update the balances state with the fetched balances
+  setBalances(fetchedBalances);
+};
+```
+
+Now let's explain each part of the `smartWallet` function:
+
+1. **Initialization**: 
+   - We initialize the FuseSDK using the provided API key and credentials using `FuseSDK.init()`. 
+   - The `withPaymaster: true` option enables the use of a paymaster.
+
+2. **Getting Smart Account Address**:
+   - We retrieve the address of the Smart Account using `fuseSDK.wallet.getSender()` and set it to the `smartAccount` state variable.
+
+3. **Getting Token List**:
+   - We use `fuseSDK.explorerModule.getTokenList(smartAccount)` to fetch the list of tokens held by the Smart Contract Wallet.
+   - This method returns an array of objects, each containing information about a token, such as symbol, name, and address.
+   - We set this array of token objects to the `tokenNames` state variable.
+
+4. **Extracting Token Addresses**:
+   - We extract the token addresses from the `tokenList` array using the `map()` function and store them in the `tokenAddresses` array.
+
+5. **Fetching Balances**:
+   - We initialize an empty object, `fetchedBalances`, to store the token balances.
+   - We iterate over each `tokenAddress` in the `tokenAddresses` array.
+   - For each `tokenAddress`, we use `fuseSDK.explorerModule.getTokenBalance(tokenAddress, smartAccount)` to fetch the balance of that token held by the Smart Contract Wallet.
+   - We store each balance in the `fetchedBalances` object with the `tokenAddress` as the key.
+
+6. **Updating State**:
+   - Finally, we update the `balances` state variable with the `fetchedBalances` object containing token balances.
+
+This breakdown explains how each part of the `smartWallet` function works and utilizes the `getTokenList` and `getTokenBalance` methods to fetch token information and balances for a Smart Contract Wallet.
+
