@@ -74,3 +74,4 @@ The FuseBox Team
 
 - [FuseBox Web SDK Demo App](https://github.com/fuseio/examples/tree/web-sdk-demo)
 - [GET Smart Contract Wallet Tokens Balances](https://github.com/fuseio/examples/tree/scw-token-balance)
+- [Flutter DEMO App](https://github.com/fuseio/examples/tree/flutter-demo-app)
