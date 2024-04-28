@@ -57,7 +57,15 @@ async function fetchData() {
 fetchData();
 ```
 
-Save the file, open your browser and go to the console, you will find the results logged to the console.
+Save the file. 
+
+Run the application using the command:
+
+```bash
+npm run dev
+```
+
+Open your browser go to `http://localhost:3000` and open the developer console, you will find the results logged to the console.
 
 ## Step 4: Table UI
 To return the response via the UI, we will use a Table. Copy the code below:
@@ -103,7 +111,20 @@ To return the response via the UI, we will use a Table. Copy the code below:
 
 Save the file.
 
-To parse the responses via the UI, we will use React useState to update the UI components. Create a state to store the responses from the Fetch call.
+To parse the responses via the UI, we will use React useState to update the UI components. 
+
+Create an interface to handle the Token response object:
+
+```javascript
+interface Token {
+    symbol: string
+    contractAddress: string
+    balance: number
+    type: string
+}
+```
+
+Create a state to store the responses from the Fetch call.
 
 ```javascript
 const [tokenData, setTokenData] = useState([]);
@@ -180,7 +201,13 @@ const handleReturnBalances = async (e) => {
 Add a state to handle the address from the input, before it parses it to the URL.
 
 ```javascript
-const [address, setAddress] = useState("");
+const [address, setAddress] = useState<string>("");
+```
+
+Update the apiUrl, use backticks:
+
+```javascript
+const apiUrl = `https://api.fuse.io/api/v0/explorer?module=account&action=tokenlist&apiKey=pk_API_KEY&address=${address}`
 ```
 
 Update the Form Input elements by adding `value` and `onchange` arguments. We will set the state when calling onchange:
@@ -205,8 +232,7 @@ const handleReturnBalances = async (e) => {
 };
 ```
 
-Save the file. 
-Run your Next.js application using the following command:
+Save the file. Run the application using the following command:
 
 ```javascript
 npm run dev
