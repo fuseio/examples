@@ -14,7 +14,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-\
+
  ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,6 +27,13 @@ import { Line } from 'react-chartjs-2';
 
 export default function Home() {
 
+  interface Token {
+    timestamp: number
+    priceChange: string
+    previousPrice: string
+    currentPrice: string
+  }
+
   const [priceData, setPriceData] = useState<Token[]>([]);
 
   const labels = priceData.map(token => {
@@ -38,7 +45,7 @@ export default function Home() {
       return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     });
 
-  const apiUrl = `https://api.fuse.io/api/v0/trade/pricechange/interval/HOUR/0xDe4b9879B56187D13B2c41Da24c72Ff100A5AC9A?apiKey={API_KEY}`
+  const apiUrl = `https://api.fuse.io/api/v0/trade/pricechange/interval/HOUR/0xDe4b9879B56187D13B2c41Da24c72Ff100A5AC9A?apiKey=API_KEY`
 
   async function fetchData() {
       try {
