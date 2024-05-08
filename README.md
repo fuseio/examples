@@ -77,3 +77,4 @@ The FuseBox Team
 - [Flutter DEMO App](https://github.com/fuseio/examples/tree/flutter-demo-app)
 - [REST API - How to Get Token Balances for Address](https://github.com/fuseio/examples/tree/api-address-balance)
 - [REST API - How to GET Price Changes for a Token By Intervals](https://github.com/fuseio/examples/tree/api-price-changes-by-interval/api-price-changes-by-interval)
+- [Swap Tokens using FuseBox Flutter Wallet SDK](https://github.com/fuseio/examples/tree/flutter-swap-tokens-app/swap_token_app)
