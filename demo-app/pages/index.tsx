@@ -14,20 +14,46 @@ export default function Home() {
   const [amountValue, setAmountValue] = useState<string>("");
   const [usdcBal, setUsdcBal] = useState<string>("");
 
-  const scw = async () => {
+  const initFuseSDK = async () => {
     const apiKey = "API_KEY";
     const credentials = new ethers.Wallet(`0xPrivateKey`);
     const fuseSDK = await FuseSDK.init(apiKey, credentials, {
       withPaymaster: true,
     });
 
-    setSmartAccount(fuseSDK.wallet.getSender());
+    const smartAccount = fuseSDK.wallet.getSender();
+    setSmartAccount(smartAccount);
     console.log(
-      `Smart account address: https://explorer.fuse.io/address/${fuseSDK.wallet.getSender()}`
+      `Smart account address: https://explorer.fuse.io/address/${smartAccount}`
     );
 
-    // getTokenList()
-    // await scwBalance()
+    return fuseSDK;
+  };
+
+  const getTokenBalance = async (fuseSDK, tokenAddress, smartAccount) => {
+    const tokenBalance = await fuseSDK.explorerModule.getTokenBalance(
+      tokenAddress,
+      smartAccount
+    );
+
+    if (tokenBalance !== null) {
+      const decimals = 6;
+      const formattedBalance = Number(tokenBalance) / Math.pow(10, decimals);
+      console.log(`Token: ${tokenAddress}, balance: ${formattedBalance}`);
+      setUsdcBal(formattedBalance.toString());
+    } else {
+      console.error("Token balance could not be retrieved.");
+    }
+  };
+
+  const scw = async () => {
+    try {
+      const fuseSDK = await initFuseSDK();
+      const tokenAddress = "0x28C3d1cD466Ba22f6cae51b1a4692a831696391A";
+      await getTokenBalance(fuseSDK, tokenAddress, smartAccount);
+    } catch (error) {
+      console.error("An error occurred:", error);
+    }
   };
 
   const handleTo = (e) => {
@@ -40,13 +66,8 @@ export default function Home() {
 
   const transfer = async () => {
     console.log(amountValue, toValue);
+    const fuseSDK = await initFuseSDK();
     const tokenAddress = "0x28C3d1cD466Ba22f6cae51b1a4692a831696391A";
-    const apiKey = "API_KEY";
-    const credentials = new ethers.Wallet(`0xPrivateKey`);
-    const fuseSDK = await FuseSDK.init(apiKey, credentials, {
-      withPaymaster: true,
-    });
-
     const amount = ethers.parseUnits(amountValue, 6);
     const res = await fuseSDK.transferToken(tokenAddress, toValue, amount);
     console.log(`UserOpHash: ${res?.userOpHash}`);
@@ -65,30 +86,6 @@ export default function Home() {
       }
     );
   };
-
-  const getTokenList = async () => {
-    const apiKey = "API_KEY";
-    const credentials = new ethers.Wallet(`0xPrivateKey`);
-    const fuseSDK = await FuseSDK.init(apiKey, credentials);
-    const tokenList = await fuseSDK.explorerModule.getTokenList(smartAccount);
-    console.log(tokenList);
-  };
-
-  // getTokenList()
-
-  const scwBalance = async () => {
-    const apiKey = "API_KEY";
-    const credentials = new ethers.Wallet(`0xPrivateKey`);
-    const fuseSDK = await FuseSDK.init(apiKey, credentials);
-    const tokenAddress = "0x28C3d1cD466Ba22f6cae51b1a4692a831696391A";
-    const tokenBalance = await fuseSDK.explorerModule.getTokenBalance(
-      tokenAddress,
-      smartAccount
-    );
-    console.log(`Token: ${tokenAddress}, balance: ${tokenBalance.toString()}`);
-    setUsdcBal(tokenBalance.toString());
-  };
-  // scwBalance()
 
   const handleSubmit = (e) => {
     e.preventDefault();
