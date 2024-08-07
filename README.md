@@ -80,4 +80,4 @@ The FuseBox Team
 - [Swap Tokens using FuseBox Flutter Wallet SDK](https://github.com/fuseio/examples/tree/flutter-swap-tokens-app/swap_token_app)
 - [Stake Tokens using FuseBox Flutter Wallet SDK](https://github.com/fuseio/examples/blob/flutter-stake-tokens-app/stake_token_app/lib/main.dart)
 - [REST API - Trade v2 GET Quotes](https://github.com/fuseio/examples/tree/rest-api-guide-trade-v2)
--[REST API - Get Non Fungible NFT Token Balances](https://github.com/fuseio/examples/blob/api-erc721-balance/erc721/pages/index.js)
+- [REST API - Get Non Fungible NFT Token Balances](https://github.com/fuseio/examples/blob/api-erc721-balance/erc721/pages/index.js)
