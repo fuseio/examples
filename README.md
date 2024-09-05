@@ -1,83 +1,212 @@
-# Repository for FuseBox Code Examples
+# Introduction
 
-## FuseBox SDK Examples Repository
+In this tutorial, we will walk through how to create a simple token swap feature in a Next.js application using the Fuse SDK. By the end of this tutorial, you'll have a working Next.js app that allows users to swap tokens seamlessly.
 
-Welcome to the FuseBox SDK Examples Repository! This repository is designed to provide developers with a comprehensive collection of code examples utilizing the FuseBox Web SDK, FuseBox Mobile SDK, and the FuseBox API. Whether you're a seasoned developer looking to integrate FuseBox technologies into your projects or a newcomer eager to explore the capabilities of the FuseBox ecosystem, you've come to the right place. 💻
+## Prerequisites
 
-## What is FuseBox?
+Before starting, ensure you have the following:
 
-[FuseBox](https://docs.fuse.io/fuse-box/getting-started) is an Open Source Wallet-As-A-Service platform based on Account Abstraction. It is ERC-4337 complaint and provides Developers the ability to use a Bundler for collacting UserOperations, and also a Paymaster to sponsor Gas payments for their users to provide a Gasless experience. It provides a set of features that are available to Developers via a SDKs (TypeScript & Dart). Thus making is easier for Developers to interact with the Fuse Blockchain without the need to make direct RPC calls, and eliminating the need to use a node service provider.
+- Node.js installed on your machine.
+- Code Editor: Use your preferred code editor; VS Code is recommended.
+- An EOA wallet with a private key. You can use an existing one or create a new wallet.
+- A basic understanding of React.js and Next.js.
+- An API key from the Fuse Console. Get one [here](https://console.fuse.io/build).
 
-Whether you're building financial services, decentralized marketplaces, or social networking platforms, FuseBox provides the tools and infrastructure you need to bring your ideas to life.
+## Step 1: Set Up a Next.js Project
 
-## FuseBox SDKs
+If you haven't already set up a Next.js project, you can create one using the following commands:
 
-### FuseBox Web SDK
+```bash
+npx create-next-app my-project
+cd my-project
+```
 
-The FuseBox Web SDK enables developers to create web-based decentralized applications that seamlessly interact with the FuseBox network. With robust features and intuitive functionalities, developers can quickly integrate blockchain functionality into their web applications.
+Answer the required prompts from NextJS in the terminal. We must note that we use TypeScript and Tailwind CSS for this application.
 
-Learn more about the FuseBox Web SDK: [FuseBox Web SDK](https://www.npmjs.com/package/@fuseio/fusebox-web-sdk)
 
-### FuseBox Mobile SDK
+## Step 2: Install Required Packages
 
-The FuseBox Mobile SDK allows developers to build powerful decentralized applications for mobile platforms, including iOS and Android. With native support for mobile features and a streamlined development experience, developers can create immersive decentralized experiences for mobile users.
+Install the necessary packages by running the following command in your project directory:
 
-Explore the FuseBox Mobile SDK: [FuseBox Mobile SDK](https://pub.dev/packages/fuse_wallet_sdk)
+```bash
+npm install @fuseio/fusebox-web-sdk ethers
+```
 
-### FuseBox API
+## Step 3: Import Libraries
 
-The FuseBox API provides developers with access to a wide range of blockchain functionalities, including wallet management, transaction processing, and smart contract interactions. With comprehensive documentation and easy-to-use endpoints, developers can integrate blockchain capabilities into their applications with minimal effort.
+Open the index.tsx file, delete the default code from NextJS. Edit index.tsx file by adding the code below and save it to see the updated result in your browser. First, import the required libraries and put up a default `Hello, World!’ text:
 
-Discover the FuseBox API: [FuseBox API](https://docs.fuse.io/api-introduction/)
+```javascript
+import { FuseSDK } from "@fuseio/fusebox-web-sdk";
+import { ethers } from "ethers";
 
-## Repository Contents
+export default function Home() {
+  return (
+    <main className={`flex flex-col items-center p-24 ${inter.className}`}>
+      Hello, World!
+    </main>
+  );
+}
+```
 
-This repository contains a variety of code examples showcasing the capabilities of the FuseBox SDKs and API. From simple "Hello, World" demonstrations to more advanced dApp implementations, you'll find a wealth of resources to help you kickstart your FuseBox development journey.
+## Step 4: Run the Development Server
 
-## Getting Started
+Run `npm run dev` to start the development server. Visit `http://localhost:3000` to view your application.
 
-To get started, simply clone this repository and explore the code examples provided. Each example lives in a separate branch, allowing you to focus on specific features or use cases. Follow these steps to clone a particular example branch:
+We are going to use the `TradeRequest` FuseBox Web SDK methods to build the application.
 
-1. Clone the repository to your local machine using Git:
+## Step 4: Initialize the App State
 
-   ```bash
-   git clone https://github.com/fuseio/examples.git
-   ```
+We are going to first get the Smart Contract Wallet, and it's owned Tokens and their respective balances, excluding Fuse native token balance. We will handle these information in various state and set/call each as required. We will also implement an App Loading state while waiting for the Promise methods to be resolved.
 
-2. Navigate to the directory of the cloned repository:
+Import the `useState` method:
 
-   ```bash
-   cd examples
-   ```
+```javascript
+import { useState, useEffect } from "react";
+```
 
-3. List all available branches:
+Set the state variables:
 
-   ```bash
-   git branch -a
-   ```
+```javascript
+const [amount, setAmount] = useState < string > "";
+const [swapResult, setSwapResult] = useState < any > null;
+const [loading, setLoading] = useState < boolean > false;
+```
 
-4. Choose the example you want to explore and checkout to its branch:
+## Step 5: Implement The Swap Function
 
-   ```bash
-   git checkout example-branch-name
-   ```
+We will implement the methods: init, getSender, getTokenList and getTokenBalance in one method call. Declare the method as smartWalletBalance. Add the following code:
 
-5. Explore the example code and follow the provided documentation and instructions to understand how to leverage FuseBox technologies in your own projects.
+```javascript
+const apiKey = "pk_YOUR_KEY"; // Replace with your API key
+const privateKey = "YOUR_PRIVATE_KEY"; // // Replace with your Private key
 
-We're excited to see what you'll create with FuseBox! If you have any questions, feedback, or feature requests, don't hesitate to reach out to us on [Twitter](https://twitter.com/Fuse_network), [Discord](https://discord.com/invite/jpPMeSZ) and [Telegram](https://t.me/fuseio).
+const nativeTokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+const usdcTokenAddress = "0x28C3d1cD466Ba22f6cae51b1a4692a831696391A";
 
-Happy coding!
+const handleSwap = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-The FuseBox Team
+  try {
+    const credentials = new ethers.Wallet(privateKey);
+    const fuse = await FuseSDK.init(apiKey, credentials, {
+      withPaymaster: true,
+    });
 
-## Example Projects
+    const smartContractAddress = fuse.wallet.getSender();
+    console.log(`Sender Address is ${smartContractAddress}`);
 
-- [FuseBox Web SDK Demo App](https://github.com/fuseio/examples/tree/web-sdk-demo)
-- [GET Smart Contract Wallet Tokens Balances](https://github.com/fuseio/examples/tree/scw-token-balance)
-- [Flutter DEMO App](https://github.com/fuseio/examples/tree/flutter-demo-app)
-- [REST API - How to Get Token Balances for Address](https://github.com/fuseio/examples/tree/api-address-balance)
-- [REST API - How to GET Price Changes for a Token By Intervals](https://github.com/fuseio/examples/tree/api-price-changes-by-interval/api-price-changes-by-interval)
-- [Swap Tokens using FuseBox Flutter Wallet SDK](https://github.com/fuseio/examples/tree/flutter-swap-tokens-app/swap_token_app)
-- [Stake Tokens using FuseBox Flutter Wallet SDK](https://github.com/fuseio/examples/blob/flutter-stake-tokens-app/stake_token_app/lib/main.dart)
-- [REST API - Trade v2 GET Quotes](https://github.com/fuseio/examples/tree/rest-api-guide-trade-v2)
-- [REST API - Get Non Fungible NFT Token Balances](https://github.com/fuseio/examples/blob/api-erc721-balance/erc721/pages/index.js)
+    const tradeRequest = new TradeRequest(
+      nativeTokenAddress,
+      usdcTokenAddress,
+      ethers.parseUnits(amount, 18),
+      true
+    );
+
+    const resSwap = await fuse.swapTokens(tradeRequest);
+    setSwapResult(resSwap);
+  } catch (error) {
+    console.error("Swap failed:", error);
+    setSwapResult("Swap failed");
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+### Code Breakdown
+
+- The `handleSwap` function is the core of our token swap operation. It’s an asynchronous function that handles the entire process when the user submits the form. Here’s what each part does:
+
+- `setLoading(true)`: We set the loading state to true to indicate that the swap process has started.
+
+- Fuse SDK Initialization: We initialize the Fuse SDK by creating a credentials object using the `ethers` and then calling `FuseSDK.init` with the **API key** and **credentials**. This gives us access to the Fuse SDK’s methods.
+
+- `tradeRequest`: This object defines the swap details, including the input and output tokens and the amount to swap.
+
+- `Swap Execution`: The fuse.swapTokens(tradeRequest) method initiates the swap. The result is stored in the swapResult state.
+
+- `Error Handling`: If something goes wrong during the swap, we catch the error and update swapResult to inform the user.
+
+- `setLoading(false)`: Finally, we reset the loading state to false, regardless of whether the swap succeeded or failed.
+
+Replace **"YOUR_API_KEY"** and **"YOUR_PRIVATE_KEY"** with your actual API key and Private Key.
+
+## Step 6: Update the UI
+
+```javascript
+<main className="flex min-h-screen flex-col p-24">
+  <form onSubmit={handleSwap} className="flex max-w-md flex-col gap-4">
+    <div className="mt-3">
+      <label
+        htmlFor="amount-input"
+        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+      >
+        Amount to Swap
+      </label>
+      <input
+        type="text"
+        id="amount-input"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder="Enter amount in ETH"
+        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        required
+      />
+    </div>
+    <button
+      type="submit"
+      className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+      disabled={loading}
+    >
+      {loading ? "Swapping..." : "Swap"}
+    </button>
+  </form>
+
+  {swapResult && (
+    <div className="mt-12 relative overflow-x-auto shadow-md sm:rounded-lg">
+      <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+          <tr>
+            <th scope="col" className="px-6 py-3">
+              Swap Result
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-b border-gray-200 dark:border-gray-700">
+            <td className="px-6 py-4 bg-gray-50 dark:bg-gray-800">
+              <pre className="text-gray-900 dark:text-white">
+                {JSON.stringify(swapResult, null, 2)}
+              </pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )}
+</main>
+```
+
+## Step 8: Run Your Next.js Application
+
+Call the smartWalletBalance in a `useEffect` Hook:
+
+```javascript
+useEffect(() => {
+  smartWalletBalance();
+}, []);
+```
+
+Run your Next.js application using the following command:
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000` in your browser to see the application in action.
+
+Congratulations! You have successfully implemented a token swap feature in a Next.js app using the Fuse SDK and styled it with Tailwind CSS. This simple yet powerful feature can be extended and integrated into larger applications where token swaps are necessary.
+
+Checkout the complete code. 💻
